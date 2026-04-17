@@ -1,8 +1,8 @@
 #  Delivery Checklist — Day 12 Lab Submission
 
-> **Student Name:** _________________________  
-> **Student ID:** _________________________  
-> **Date:** _________________________
+> **Student Name:** Bui Lam Tien
+> **Student ID:** 2A202600004
+> **Date:** 17/14/2026
 
 ---
 
