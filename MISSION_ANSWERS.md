@@ -1,12 +1,12 @@
-#  Delivery Checklist — Day 12 Lab Submission
+# Delivery Checklist — Day 12 Lab Submission
 
-> **Student Name:** Bui Lam Tien
+> **Student Name:** Bùi Lâm Tiến
 > **Student ID:** 2A202600004
-> **Date:** 17/14/2026
+> **Date:** 17/04/2026
 
 ---
 
-##  Submission Requirements
+## Submission Requirements
 
 Submit a **GitHub repository** containing:
 
@@ -43,9 +43,9 @@ Create a file `MISSION_ANSWERS.md` with your answers to all exercises:
 4. CMD vs ENTRYPOINT: `CMD` cung cấp default options của image (dễ dàng thay thế qua lệnh truyền lúc `docker run`). `ENTRYPOINT` quy định process luôn chạy.  
 
 ### Exercise 2.3: Image size comparison
-- Develop: ~1000 MB (Dùng python image mặc định full công cụ)
-- Production: ~150 MB (Dùng multi-stage build và python-slim)
-- Difference: ~85% dung lượng giảm
+- Develop: 1.66 GB (Dùng python image mặc định full công cụ)
+- Production: 236 MB (Dùng multi-stage build và python-slim)
+- Difference: ~86% dung lượng giảm
 
 ## Part 3: Cloud Deployment
 
@@ -59,29 +59,49 @@ Create a file `MISSION_ANSWERS.md` with your answers to all exercises:
 ```bash
 # Không truyền API Key -> Lỗi 401
 $ curl http://localhost:8000/ask -X POST -H "Content-Type: application/json" -d '{"question": "Hello"}'
-{"detail":"Not authenticated"}
+{"detail":"Invalid or missing API key. Include header: X-API-Key: <key>"}
 
 # Truyền đúng API Key -> 200 OK
-$ curl http://localhost:8000/ask -X POST -H "X-API-Key: secret-key-123" -H "Content-Type: application/json" -d '{"question": "Hello"}'
-{"answer":"Trích dẫn nội dung JSON đã được trả về từ Agent"}
+$ curl http://localhost:8000/ask -X POST -H "X-API-Key: dev-key-change-me" -H "Content-Type: application/json" -d '{"question": "Hello"}'
+{
+  "question": "Hello",
+  "answer": "I can only assist with banking-related questions such as accounts, transfers, loans, and interest rates. How can I help you with banking today?",
+  "model": "gpt-4o-mini",
+  "timestamp": "2026-04-17T16:45:00+00:00"
+}
 
-# Vượt quá Rate Limit (quá 10 req/phút) -> Lỗi 429
-$ curl http://localhost:8000/ask -X POST -H "Validation..."
-{"detail":"Rate limit exceeded"}
+# Vượt quá Rate Limit (quá 20 req/phút) -> Lỗi 429
+$ for i in {1..25}; do curl http://localhost:8000/ask -X POST -H "X-API-Key: dev-key-change-me" -H "Content-Type: application/json" -d '{"question": "Hello"}'; done
+{"detail":"Rate limit exceeded: 20 req/min"}
 ```
 
 ### Exercise 4.4: Cost guard implementation
-Triển khai Redis để track cost theo từng user và từng tháng. 
+
+Triển khai Redis để track cost theo từng user và từng tháng.
+
 - Sử dụng key trên Redis theo format `budget:{user_id}:{YYYY-MM}`.
-- Mỗi khi có request, sẽ tính toán cost dự đoán. Sau đó get biến current_cost hiện tại, nếu `current_cost + estimated_cost > LIMIT (10$)` thì block request và trả về lỗi vượt budget.
+- Mỗi khi có request, sẽ tính toán cost dự đoán. Sau đó get biến current_cost hiện tại, nếu `current_cost + estimated_cost > LIMIT (5$)` thì block request và trả về lỗi vượt budget.
 - Nếu nằm trong mức an toàn, dùng `r.incrbyfloat` để cộng dồn cost và set expiration (ví dụ 32 ngày) để tự động xoá dữ liệu sang tháng mới mà không bị leak memory của Redis.
 
 ## Part 5: Scaling & Reliability
 
 ### Exercise 5.1-5.5: Implementation notes
+
 - **Exercise 5.1 (Health Checks):** Đã phân chia `/health` (Liveness) để check process đang chạy và `/ready` (Readiness) để check các dependencies bên thứ 3 (Ping Redis / Database connections) xem instance đó đã đủ khoẻ để server load balancer chuyển traffic vào chưa rớt.
 - **Exercise 5.2 (Graceful Shutdown):** Tích hợp bắt tín hiệu `SIGTERM` trong logic. Khi nhận tín hiệu, ứng dụng sẽ ngừng nhận request mới từ Load Balancer, chờ xử lý nốt các process đang dang dở, đóng database sạch sẽ và exit một cách toàn vẹn.
 - **Exercise 5.3 & 5.5 (Stateless Design):** Đã xoá bỏ dictionary local server memory lưu trữ state conversation để tránh trường hợp scaling nhiều replicas gây lệch dữ liệu theo từng instances. State được lưu trên Redis (`r.lrange(f"history:{user_id}", 0, -1)`) giúp mọi instance đều có cái nhìn duy nhất về lịch sử chat của user.
+
+### Test Results
+
+```bash
+# Exercise 5.1: Health validation
+$ curl http://localhost:8000/health
+{"status":"ok","version":"1.0.0","uptime_seconds":12.5,"total_requests":2}
+
+# Exercise 5.1: Ready (with Redis connection alive)
+$ curl http://localhost:8000/ready
+{"ready":true}
+```
 
 ---
 
@@ -109,15 +129,16 @@ your-repo/
 ```
 
 **Requirements:**
--  All code runs without errors
--  Multi-stage Dockerfile (image < 500 MB)
--  API key authentication
--  Rate limiting (10 req/min)
--  Cost guard ($10/month)
--  Health + readiness checks
--  Graceful shutdown
--  Stateless design (Redis)
--  No hardcoded secrets
+
+- All code runs without errors
+- Multi-stage Dockerfile (image < 500 MB)
+- API key authentication
+- Rate limiting (10 req/min)
+- Cost guard ($10/month)
+- Health + readiness checks
+- Graceful shutdown
+- Stateless design (Redis)
+- No hardcoded secrets
 
 ---
 
@@ -143,6 +164,7 @@ curl https://your-agent.railway.app/health
 ```
 
 ### API Test (with authentication)
+
 ```bash
 curl -X POST https://your-agent.railway.app/ask \
   -H "X-API-Key: YOUR_KEY" \
@@ -151,15 +173,18 @@ curl -X POST https://your-agent.railway.app/ask \
 ```
 
 ## Environment Variables Set
+
 - PORT
 - REDIS_URL
 - AGENT_API_KEY
 - LOG_LEVEL
 
 ## Screenshots
+
 - [Deployment dashboard](screenshots/dashboard.png)
 - [Service running](screenshots/running.png)
 - [Test results](screenshots/test.png)
+
 ```
 
 ##  Pre-Submission Checklist
@@ -204,7 +229,7 @@ done
 
 ---
 
-##  Submission
+## Submission
 
 **Submit your GitHub repository URL:**
 
@@ -216,18 +241,18 @@ https://github.com/your-username/day12-agent-deployment
 
 ---
 
-##  Quick Tips
+## Quick Tips
 
-1.  Test your public URL from a different device
-2.  Make sure repository is public or instructor has access
-3.  Include screenshots of working deployment
-4.  Write clear commit messages
-5.  Test all commands in DEPLOYMENT.md work
-6.  No secrets in code or commit history
+1. Test your public URL from a different device
+2. Make sure repository is public or instructor has access
+3. Include screenshots of working deployment
+4. Write clear commit messages
+5. Test all commands in DEPLOYMENT.md work
+6. No secrets in code or commit history
 
 ---
 
-##  Need Help?
+## Need Help?
 
 - Check [TROUBLESHOOTING.md](TROUBLESHOOTING.md)
 - Review [CODE_LAB.md](CODE_LAB.md)
@@ -236,4 +261,4 @@ https://github.com/your-username/day12-agent-deployment
 
 ---
 
-**Good luck! **
+**Good luck!**
