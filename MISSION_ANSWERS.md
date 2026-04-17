@@ -50,8 +50,8 @@ Create a file `MISSION_ANSWERS.md` with your answers to all exercises:
 ## Part 3: Cloud Deployment
 
 ### Exercise 3.1: Railway deployment
-- URL: https://my-agent.up.railway.app
-- Screenshot: [Screenshot url from dashboard]
+- URL: https://cloud-deploy-production.up.railway.app
+- Screenshot: image/3-cloud-deployment
 
 ## Part 4: API Security
 
@@ -181,9 +181,9 @@ curl -X POST https://your-agent.railway.app/ask \
 
 ## Screenshots
 
-- [Deployment dashboard](screenshots/dashboard.png)
-- [Service running](screenshots/running.png)
-- [Test results](screenshots/test.png)
+- [Deployment dashboard](image/dashboard.png)
+- [Service running](image/running.png)
+- [Test results](image/test.png)
 
 ```
 
