@@ -1,0 +1,13 @@
+pydantic
+pyjwt
+redis
+psutil
+google-genai
+google-adk
+nemoguardrails
+fastapi
+uvicorn
+python-dotenv
+openai
+litellm
+langchain-openai
