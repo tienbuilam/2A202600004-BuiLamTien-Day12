@@ -6,7 +6,7 @@ google-genai
 google-adk
 nemoguardrails
 fastapi
-uvicorn
+uvicorn[standard]==0.30.0
 python-dotenv
 openai
 litellm
